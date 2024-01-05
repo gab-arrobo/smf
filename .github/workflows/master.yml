@@ -57,8 +57,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: reuse lint
-        run: make check-reuse
+      - name: REUSE Compliance Check
+        uses: fsfe/reuse-action@v2
 
   unit-tests:
     runs-on: ubuntu-latest
@@ -71,3 +71,15 @@ jobs:
 
       - name: Unit tests
         run: go test ./...
+
+  fossa-check:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout tree
+        uses: actions/checkout@v4
+
+      - name: Run FOSSA scan and upload build data
+        uses: fossa-contrib/fossa-action@v3
+        with:
+          fossa-api-key: 9dc8fa92e3dd565687317beb87b56d89
