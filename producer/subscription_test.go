@@ -11,7 +11,6 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/omec-project/openapi/v2"
 	"github.com/omec-project/openapi/v2/models"
 	smfContext "github.com/omec-project/smf/context"
 	"github.com/omec-project/smf/factory"
@@ -48,21 +47,17 @@ func TestNfSubscriptionStatusNotify(t *testing.T) {
 		callCountNRFCacheRemoveNfProfileFromNrfCache++
 		return true
 	}
-	udmProfile := models.NotificationDataAllOfNfProfile{
-		UdrInfo: &models.UdrInfo{
-			SupportedDataSets: []models.DataSetId{
-				models.DATASETID_SUBSCRIPTION,
-			},
+	udmProfile := models.NewNotificationDataAllOfNfProfile(nfInstanceID, "UDM", "DEREGISTERED")
+	udrInfo := models.UdrInfo{
+		SupportedDataSets: []models.DataSetId{
+			models.DATASETID_SUBSCRIPTION,
 		},
-		NfInstanceId: nfInstanceID,
-		NfType:       "UDM",
-		NfStatus:     "DEREGISTERED",
 	}
-	badRequestProblem := models.ProblemDetails{
-		Status: openapi.PtrInt32(http.StatusBadRequest),
-		Cause:  openapi.PtrString("MANDATORY_IE_MISSING"),
-		Detail: openapi.PtrString("Missing IE [Event]/[NfInstanceUri] in NotificationData"),
-	}
+	udmProfile.SetUdrInfo(udrInfo)
+	badRequestProblem := models.NewProblemDetails()
+	badRequestProblem.SetStatus(http.StatusBadRequest)
+	badRequestProblem.SetCause("MANDATORY_IE_MISSING")
+	badRequestProblem.SetDetail("Missing IE [Event]/[NfInstanceUri] in NotificationData")
 	parameters := []struct {
 		expectedProblem                                      *models.ProblemDetails
 		testName                                             string
@@ -136,7 +131,7 @@ func TestNfSubscriptionStatusNotify(t *testing.T) {
 			true,
 		},
 		{
-			&badRequestProblem,
+			badRequestProblem,
 			"Notification event type DEREGISTERED NRF caching is enabled NfInstanceUri in notificationData is empty",
 			"Return StatusBadRequest with cause MANDATORY_IE_MISSING",
 			"",
@@ -148,7 +143,7 @@ func TestNfSubscriptionStatusNotify(t *testing.T) {
 			true,
 		},
 		{
-			&badRequestProblem,
+			badRequestProblem,
 			"Notification event type empty NRF caching is enabled",
 			"Return StatusBadRequest with cause MANDATORY_IE_MISSING",
 			nfInstanceID,
@@ -167,7 +162,7 @@ func TestNfSubscriptionStatusNotify(t *testing.T) {
 			notificationData := models.NotificationData{
 				Event:          models.NotificationEventType(parameters[i].notificationEventType),
 				NfInstanceUri:  parameters[i].nfInstanceId,
-				NfProfile:      &udmProfile,
+				NfProfile:      udmProfile,
 				ProfileChanges: []models.ChangeItem{},
 			}
 			err := NfSubscriptionStatusNotifyProcedure(notificationData)
